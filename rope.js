@@ -114,11 +114,15 @@ Concat.prototype.balance = function (force) {
 
       var r = null;
       var level;
-      for (level = leastslot; level < slot || r.length >= fib(level+1) || slots[level]; ++level) {
+
+      // We can't start this loop at leastslot ...
+      for (level = leastslot-1; level < slot || slots[level] || r.length >= fib(level+1); ++level) {
         if (slots[level]) {
           r = r ? slots[level].concat(r) : slots[level];
           slots[level] = null;
         }
+
+        // ... since this condition would never trigger:
         if (level == slot-1) {
           r = r ? r.concat(l) : l;
         }
