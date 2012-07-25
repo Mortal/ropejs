@@ -26,7 +26,7 @@ function pow_generic(n, pow0, op) {
   return r;
 }
 function pow(n) {
-  return pow_generic(n, 1, function (n) { return n * n; });
+  return pow_generic(n, 1, function (n) { return n + n; });
 }
 function pow_string(RopeImpl, seed, n) {
   var s = String.fromCharCode(32 + seed % 90);
