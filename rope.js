@@ -84,18 +84,37 @@ Concat.prototype.balanced = function () {
 Concat.prototype.balance = function (force) {
   if (!force && this.balanced()) return this;
   ++balances;
+
   var slots = [];
+  // Property: slots[k] is either null/undef or a rope
+  // if it is a rope, it will have length [fib(k), fib(k+1)).
+
+  // Optimization: Remember the range of indices of slots that contain ropes.
   var leastslot = fibmax+1;
   var greatestslot = -1;
+
   inorder_traversal(this, function (l) {
+    // Invariant at this point:
+    // Concatenating all leaves seen up to but not including `l'
+    // yields the same rope as
+    // concatenating ropes of `slots' in reverse order.
+
     if (!l.length) return;
-    var slot = fibinv(l.length);
+    var slot = fibinv(l.length); // `slot' is k in accordance with the `slots' property.
+
     if (slot < leastslot) {
+
       slots[slot] = l;
+      // Invariant trivially maintained.
+
     } else {
+
+      // Concatenate onto the empty rope from the left from the beginning of
+      // `ropes' until it is no longer necessary.
+
       var r = null;
       var level;
-      for (level = 2; level < slot || r.length >= fib(level+1) || slots[level]; ++level) {
+      for (level = leastslot; level < slot || r.length >= fib(level+1) || slots[level]; ++level) {
         if (slots[level]) {
           r = r ? slots[level].concat(r) : slots[level];
           slots[level] = null;
@@ -106,10 +125,19 @@ Concat.prototype.balance = function (force) {
       }
       slots[level] = r;
       slot = level;
+
+      // For a discussion of the invariant,
+      // see Boehm et al (1995), section "Rebalancing".
     }
     leastslot = slot;
     greatestslot = Math.max(greatestslot, slot);
   });
+
+  /* From Boehm et al (1995):
+   * "The final step in balancing a rope is to concatenate the sequence of
+   * ropes in order of increasing size. The resulting rope will not be balanced
+   * in the above sense, but its depth will exceed the desired value by at most
+   * 2." */
   var result;
   if (greatestslot < leastslot)
     result = new Leaf("");
