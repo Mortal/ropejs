@@ -179,8 +179,8 @@ function rope_from_data(data) {
   if (data.length != 2) throw new BadJSON("data array has length "+data.length+", expected 2", data);
   return new Concat(rope_from_data(data[0]), rope_from_data(data[1]));
 }
-function rope_from_json(rope) {
-  return rope_from_data(JSON.decode(rope));
+function rope_from_json(json) {
+  return rope_from_data(JSON.parse(json));
 }
 function rope_to_data(rope) {
   if (rope instanceof Leaf) return rope.s;
@@ -188,6 +188,6 @@ function rope_to_data(rope) {
   return rope;
 }
 function rope_to_json(rope) {
-  return JSON.encode(rope_to_data(rope));
+  return JSON.stringify(rope_to_data(rope));
 }
 // vim:set ts=2 sw=2 sts=2 et:
