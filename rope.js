@@ -25,6 +25,19 @@ function fibinv(len) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Statistics
+
+var balances = 0;
+
+function reset_balance_counter() {
+  balances = 0;
+}
+
+function get_balance_counter() {
+  return balances;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Internal rope nodes (concatenation nodes) and leaves
 
 function Concat(left, right) {
@@ -68,6 +81,7 @@ Concat.prototype.balanced = function () {
 
 Concat.prototype.balance = function (force) {
   if (!force && this.balanced()) return this;
+  ++balances;
   var slots = [];
   var leastslot = fibmax+1;
   var greatestslot = -1;
@@ -199,5 +213,7 @@ exports.rope_to_data = rope_to_data;
 exports.rope_to_json = rope_to_json;
 exports.fib = fib;
 exports.fibinv = fibinv;
+exports.reset_balance_counter = reset_balance_counter;
+exports.get_balance_counter = get_balance_counter;
 
 // vim:set ts=2 sw=2 sts=2 et:
