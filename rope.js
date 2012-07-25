@@ -173,11 +173,14 @@ Concat.prototype.substring = function (pos1, pos2) {
 // Conversion to and from JSON
 function BadJSON(msg, data) {this.msg = msg; this.data = data;}
 BadJSON.prototype.toString = function () { return this.msg; };
-function rope_from_json(data) {
+function rope_from_data(data) {
   if ('string' == typeof data) return new Leaf(data);
   if (!data instanceof Array) throw new BadJSON("data neither Array nor String");
   if (data.length != 2) throw new BadJSON("data array has length "+data.length+", expected 2", data);
-  return new Concat(rope_from_json(data[0]), rope_from_json(data[1]));
+  return new Concat(rope_from_data(data[0]), rope_from_data(data[1]));
+}
+function rope_from_json(rope) {
+  return rope_from_data(JSON.decode(rope));
 }
 function rope_to_data(rope) {
   if (rope instanceof Leaf) return rope.s;
