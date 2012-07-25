@@ -66,10 +66,8 @@ Concat.prototype.balanced = function () {
   return this.length >= fib(this.depth+2);
 };
 
-var balance_debug = true;
 Concat.prototype.balance = function (force) {
   if (!force && this.balanced()) return this;
-  var before = balance_debug ? this.toString() : '';
   var slots = [];
   var leastslot = fibmax+1;
   var greatestslot = -1;
@@ -92,26 +90,19 @@ Concat.prototype.balance = function (force) {
       slots[level] = r;
       slot = level;
     }
-    leastslot = level;
+    leastslot = slot;
     greatestslot = Math.max(greatestslot, slot);
   });
   var result;
   if (greatestslot < leastslot)
     result = new Leaf("");
   else {
-    result = slots[greatestslot];
-    for (var level = greatestslot-1; level >= leastslot; ++level) {
+    result = null;
+    for (var level = 0; level <= greatestslot; ++level) {
       if (slots[level]) {
-        result = result.concat(slots[level]);
+        result = result ? slots[level].concat(result) : slots[level];
       }
     }
-  }
-  if (balance_debug) {
-    var after = result.toString();
-    if (before == after) console.log("Balance maintained toString() value");
-    else console.error("Balance changed toString() value", [before, after]);
-    if (this.balanced()) console.log("Rope is now balanced");
-    else console.error("Balance failed to balance rope", [result.length, result.depth]);
   }
   return result;
 };
@@ -131,9 +122,16 @@ Concat.prototype.toString = function () {
 Leaf.prototype.charAt = function (pos) {
   return this.s.charAt(pos);
 };
+Leaf.prototype.charCodeAt = function (pos) {
+  return this.s.charCodeAt(pos);
+};
 Concat.prototype.charAt = function (pos) {
   if (pos < this.left.length) return this.left.charAt(pos);
   return this.right.charAt(pos - this.left.length);
+};
+Concat.prototype.charCodeAt = function (pos) {
+  if (pos < this.left.length) return this.left.charCodeAt(pos);
+  return this.right.charCodeAt(pos - this.left.length);
 };
 
 // 2. Concatenate two ropes.
