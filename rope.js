@@ -142,13 +142,13 @@ Leaf.prototype.concat = function (str2) {
   if (short_leaf(this) && short_leaf(str2)) {
     return new Leaf(this.toString() + str2.toString());
   }
-  return new Concat(this, str2);
+  return new Concat(this, str2).balance();
 };
 Concat.prototype.concat = function (str2) {
   if (short_leaf(str2) && short_leaf(this.right)) {
     return new Concat(this.left, new Leaf(this.right.toString() + str2.toString()));
   }
-  return new Concat(this, str2);
+  return new Concat(this, str2).balance();
 };
 
 // 3. Substring.
