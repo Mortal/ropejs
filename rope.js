@@ -51,7 +51,7 @@ function inorder_traversal(s, fn) {
 
 // "Short leaf" definition due to Boehm et al
 function short_leaf(s) {
-  return !(s instanceof Concat) && s.length < 1;
+  return !(s instanceof Concat) && s.length < 50;
 }
 
 Leaf.prototype.balance = function () {
@@ -72,13 +72,14 @@ Concat.prototype.balance = function (force) {
   var leastslot = fibmax+1;
   var greatestslot = -1;
   inorder_traversal(this, function (l) {
+    if (!l.length) return;
     var slot = fibinv(l.length);
     if (slot < leastslot) {
       slots[slot] = l;
     } else {
       var r = null;
       var level;
-      for (level = 0; level < slot || r.length >= fib(level+1) || slots[level]; ++level) {
+      for (level = 2; level < slot || r.length >= fib(level+1) || slots[level]; ++level) {
         if (slots[level]) {
           r = r ? slots[level].concat(r) : slots[level];
           slots[level] = null;
@@ -98,7 +99,7 @@ Concat.prototype.balance = function (force) {
     result = new Leaf("");
   else {
     result = null;
-    for (var level = 0; level <= greatestslot; ++level) {
+    for (var level = leastslot; level <= greatestslot; ++level) {
       if (slots[level]) {
         result = result ? slots[level].concat(result) : slots[level];
       }
@@ -189,4 +190,14 @@ function rope_to_data(rope) {
 function rope_to_json(rope) {
   return JSON.stringify(rope_to_data(rope));
 }
+exports.Leaf = Leaf;
+exports.Concat = Concat;
+exports.inorder_traversal = inorder_traversal;
+exports.rope_from_data = rope_from_data;
+exports.rope_from_json = rope_from_json;
+exports.rope_to_data = rope_to_data;
+exports.rope_to_json = rope_to_json;
+exports.fib = fib;
+exports.fibinv = fibinv;
+
 // vim:set ts=2 sw=2 sts=2 et:
