@@ -200,6 +200,7 @@ Concat.prototype.concat = function (str2) {
 
 // 3. Substring.
 Leaf.prototype.substring = function (pos1, pos2) {
+  if (pos1 <= 0 && pos2 >= this.length) return this;
   return new Leaf(this.s.substring(pos1, pos2));
 };
 Concat.prototype.substring = function (pos1, pos2) {
