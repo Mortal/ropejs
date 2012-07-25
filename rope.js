@@ -1,97 +1,148 @@
-function Rope() {
-  this.children = [];
-  this.length = 0;
-  this.mut_push.apply(this, arguments);
+function Concat(left, right) {
+  this.left = left;
+  this.right = right;
+  this.length = left.length + right.length;
+  this.depth = 1 + Math.max(left.depth, right.depth);
 }
-Rope.prototype.mut_push = function () {
-  for (var i = 0, l = arguments.length; i < l; ++i) {
-    this.children.push(arguments[i]);
-    this.length += arguments[i].length;
-  }
-};
+function Leaf(s) {
+  this.s = s;
+  this.length = s.length;
+  this.depth = 0;
+}
 function inorder_traversal(s, fn) {
-  if (s instanceof Rope) {
-    for (var i = 0, l = s.children.length; i < l; ++i) {
-      inorder_traversal(s.children[i], fn);
-    }
+  if (s instanceof Concat) {
+    inorder_traversal(s.left, fn);
+    inorder_traversal(s.right, fn);
   } else {
     fn(s);
   }
 }
-function short_leaf(s) {
-  if (!(s instanceof String)
-      && !(s instanceof Rope
-        && s.children.length == 1
-        && s.children[0] instanceof String))
-    return false;
-
-  return s.length < 10000;
+var fib = (function () {
+  var ns = [0, 1];
+  return function (n) {
+    while (n >= ns.length) ns.push(ns[ns.length-2] + ns[ns.length-1]);
+    return ns[n];
+  };
+})();
+var fibmax = 1476; // fib(fibmax) is finite, fib(fibmax+1) is infinite
+function fibinv(len) {
+  // Return n such that fib(n) is finite and fib(n) <= len < fib(n+1).
+  var n = 0;
+  while (n < fibmax-1) {
+    if (len < fib(n+1))
+      return n;
+    ++n;
+  }
+  return n; // == fibmax
 }
-Rope.prototype.toString = function () {
-  var l = this.children.length;
-  var res = new Array(l);
-  for (var i = 0; i < l; ++i) {
-    res[i] = this.children[i].toString();
-  }
-  return res.join('');
+function short_leaf(s) {
+  return !(s instanceof Concat) && s.length < 1;
+}
+Leaf.prototype.balance = function () {
+  return this;
 };
-Rope.prototype.toString2 = function () {
-  var r = [];
-  inorder_traversal(this, function (s) {r.push(s);});
-  return r.join('');
+Leaf.prototype.balanced = function () {
+  return this.length >= fib(2);
 };
-Rope.prototype.toString3 = function () {
-  var r = '';
-  inorder_traversal(this, function (s) {r += s;});
-  return r;
+Concat.prototype.balanced = function () {
+  return this.length >= fib(this.depth+2);
 };
-Rope.prototype.charAt = function (pos) {
-  for (var i = 0, l = this.children.length; i < l; ++i) {
-    if (pos < this.children[i].length) {
-      return this.children[i].charAt(pos);
+var balance_debug = true;
+Concat.prototype.balance = function (force) {
+  if (!force && this.balanced()) return this;
+  var before = balance_debug ? this.toString() : '';
+  var slots = [];
+  var leastslot = fibmax+1;
+  var greatestslot = -1;
+  inorder_traversal(this, function (l) {
+    var slot = fibinv(l.length);
+    if (slot < leastslot) {
+      slots[slot] = l;
+    } else {
+      var r = null;
+      var level;
+      for (level = 0; level < slot || r.length >= fib(level+1) || slots[level]; ++level) {
+        if (slots[level]) {
+          r = r ? slots[level].concat(r) : slots[level];
+          slots[level] = null;
+        }
+        if (level == slot-1) {
+          r = r ? r.concat(l) : l;
+        }
+      }
+      slots[level] = r;
+      slot = level;
     }
-    pos -= this.children[i].length;
-  }
-  return "".charAt(0);
-};
-Rope.prototype.concat = function (str2) {
-  if (str2.length == 0) return this;
-  if (short_leaf(str2)) {
-    if (short_leaf(this)) {
-      return new Rope(this.toString()+str2.toString());
+    leastslot = level;
+    greatestslot = Math.max(greatestslot, slot);
+  });
+  var result;
+  if (greatestslot < leastslot)
+    result = new Leaf("");
+  else {
+    result = slots[greatestslot];
+    for (var level = greatestslot-1; level >= leastslot; ++level) {
+      if (slots[level]) {
+        result = result.concat(slots[level]);
+      }
     }
-    if (this.children.length == 2 && short_leaf(this.children[1])) {
-      return new Rope(this.children[0], this.children[1].toString() + str2.toString());
-    }
   }
-  return new Rope(this, str2);
+  if (balance_debug) {
+    var after = result.toString();
+    if (before == after) console.log("Balance maintained toString() value");
+    else console.error("Balance changed toString() value", [before, after]);
+    if (this.balanced()) console.log("Rope is now balanced");
+    else console.error("Balance failed to balance rope", [result.length, result.depth]);
+  }
+  return result;
 };
-Rope.prototype.substring = function (pos1, pos2) {
-  // argument sanitation
-  if (arguments.length < 2)
-    pos2 = this.length;
-  if (!pos1 || pos1 < 0)
-    pos1 = 0;
+Leaf.prototype.toString = function () {
+  return this.s;
+};
+Concat.prototype.toString = function () {
+  return this.left.toString() + this.right.toString();
+};
+Leaf.prototype.charAt = function (pos) {
+  return this.s.charAt(pos);
+};
+Concat.prototype.charAt = function (pos) {
+  if (pos < this.left.length) return this.left.charAt(pos);
+  return this.right.charAt(pos - this.left.length);
+};
+Leaf.prototype.concat = function (str2) {
+  if (this.length == 0) return str2;
+  if (short_leaf(this) && short_leaf(str2)) {
+    return new Leaf(this.toString() + str2.toString());
+  }
+  return new Concat(this, str2);
+};
+Concat.prototype.concat = function (str2) {
+  if (short_leaf(str2) && short_leaf(this.right)) {
+    return new Concat(this.left, new Leaf(this.right.toString() + str2.toString()));
+  }
+  return new Concat(this, str2);
+};
+Leaf.prototype.substring = function (pos1, pos2) {
+  return new Leaf(this.s.substring(pos1, pos2));
+};
+Concat.prototype.substring = function (pos1, pos2) {
+  if (pos1 >= this.left.length) {
+    return this.right.substring(pos1 - this.left.length, pos2 - this.left.length);
+  }
+  if (pos2 <= this.left.length) {
+    return this.left.substring(pos1, pos2);
+  }
+  return new Concat(
+      this.left.substring(pos1, this.left.length),
+      this.right.substring(0, pos2 - this.left.length));
+};
 
-  // base case
-  if (pos1 == 0 && pos2 >= this.length)
-    return this;
-
-  var res = new Rope();
-  for (var i = 0,
-           l = this.children.length,
-           startpos = 0,
-           endpos;
-       i < l;
-       startpos = endpos, ++i)
-  {
-    var child = this.children[i];
-    endpos = startpos + child.length;
-    if (endpos <= pos1) continue;
-    if (pos2 <= startpos) break;
-    var childfrom = Math.max(0, pos1-startidx),
-        childto = Math.min(child.length, pos2-startidx);
-    res.mut_push(child.substring(childfrom, childto));
-  }
-};
+function BadJSON(msg, data) {this.msg = msg; this.data = data;}
+BadJSON.prototype.toString = function () { return this.msg; };
+function rope_from_json(data) {
+  if ('string' == typeof data) return new Leaf(data);
+  if (!data instanceof Array) throw new BadJSON("data neither Array nor String");
+  if (data.length != 2) throw new BadJSON("data array has length "+data.length+", expected 2", data);
+  return new Concat(rope_from_json(data[0]), rope_from_json(data[1]));
+}
 // vim:set ts=2 sw=2 sts=2 et:
