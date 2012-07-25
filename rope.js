@@ -64,7 +64,7 @@ function inorder_traversal(s, fn) {
 
 // "Short leaf" definition due to Boehm et al
 function short_leaf(s) {
-  return !(s instanceof Concat) && s.length < 50;
+  return !(s instanceof Concat) && s.length < 16000;
 }
 
 Leaf.prototype.balance = function () {
