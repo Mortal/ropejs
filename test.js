@@ -1,3 +1,4 @@
+exports = ('undefined' == typeof exports) ? {} : exports;
 function fib_generic(n, fib0, fib1, op) {
   if (n <= 0) return fib0;
   if (n == 1) return fib1;

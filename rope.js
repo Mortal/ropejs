@@ -2,6 +2,8 @@
 // Due to Boehm, Atkinson and Plass (1995)
 // "Ropes: an Alternative to Strings"
 
+exports = ('undefined' == typeof exports) ? {} : exports;
+
 ///////////////////////////////////////////////////////////////////////////////
 // Fibonacci sequence helpers
 
